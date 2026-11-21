@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vaishnavi D | Software Engineer & SDET</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: '#09090b',
+            surface: '#121216',
+            cyanGlow: '#06b6d4',
+            emeraldPass: '#10b981',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg-page: #09090b;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-subtle: #71717a;
+      --card-bg: rgba(18, 18, 22, 0.72);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --chip-bg: rgba(24, 24, 27, 0.9);
+      --chip-border: #27272a;
+      --term-bg: rgba(11, 11, 14, 0.92);
+      --term-bar: rgba(24, 24, 27, 0.95);
+      --accent-primary: #0a84ff;
+      --accent-secondary: #30d158;
+      --accent-glow: rgba(10, 132, 255, 0.25);
+    }
+
+    html.light {
+      --bg-page: #f5f5f7;
+      --text-main: #1d1d1f;
+      --text-muted: #424245;
+      --text-subtle: #6e6e73;
+      --card-bg: rgba(255, 255, 255, 0.78);
+      --card-border: rgba(0, 0, 0, 0.08);
+      --chip-bg: rgba(244, 244, 246, 0.95);
+      --chip-border: #e4e4e7;
+      --term-bg: rgba(250, 250, 252, 0.95);
+      --term-bar: rgba(241, 241, 244, 0.98);
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      overflow-x: hidden;
+      transition: background-color 0.35s ease, color 0.35s ease;
+    }
+
+    /* Dynamic Accent Utility Classes */
+    .accent-text { color: var(--accent-primary); }
+    .accent-sec-text { color: var(--accent-secondary); }
+    .accent-gradient-bg {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    }
+    .accent-gradient-text {
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .accent-pill {
+      background-color: color-mix(in srgb, var(--accent-primary) 16%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent-primary) 42%, transparent);
+      color: var(--accent-primary);
+    }
+    .accent-glow-shadow {
+      box-shadow: 0 10px 30px -8px var(--accent-glow);
+    }
+
+    /* Fixed 3D Canvas Background */
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: auto;
+    }
+
+    /* Content overlay allows clicks on UI while letting empty spaces drag 3D scene */
+    .content-layer {
+      position: relative;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .interactive-el {
+      pointer-events: auto;
+    }
+
+    /* Glassmorphism Cards */
+    .glass-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.35s ease;
+    }
+
+    .glass-card:hover {
+      border-color: color-mix(in srgb, var(--accent-primary) 55%, transparent);
+      box-shadow: 0 20px 40px -15px var(--accent-glow);
+    }
+
+    .theme-chip {
+      background-color: var(--chip-bg);
+      border: 1px solid var(--chip-border);
+      color: var(--text-main);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-page);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+      border-radius: 4px;
+    }
+
+    /* Blinking Terminal Cursor */
+    .cursor-blink {
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <!-- Full-Screen Interactive 3D Background -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Main UI Overlay -->
+  <div class="content-layer min-h-screen flex flex-col justify-between">
+    
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-40 px-4 sm:px-8 py-4">
+      <nav class="max-w-6xl mx-auto glass-card rounded-2xl px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-3 interactive-el">
+        <a href="#" class="flex items-center gap-2.5 group">
+          <div class="w-8 h-8 rounded-lg accent-gradient-bg flex items-center justify-center text-white font-bold font-mono text-sm accent-glow-shadow">
+            VD
+          </div>
+          <span class="font-semibold tracking-tight group-hover:opacity-80 transition-opacity">
+            Vaishnavi D
+          </span>
+        </a>
+
+        <!-- Navigation Links -->
+        <div class="hidden lg:flex items-center gap-6 text-sm" style="color: var(--text-muted)">
+          <a href="#terminal" class="hover:opacity-100 opacity-80 transition-opacity">Test Runner</a>
+          <a href="#projects" class="hover:opacity-100 opacity-80 transition-opacity">Projects</a>
+          <a href="#skills" class="hover:opacity-100 opacity-80 transition-opacity">Skills & Certs</a>
+          <a href="#contact" class="hover:opacity-100 opacity-80 transition-opacity">Contact</a>
+        </div>
+
+        <!-- Right Controls: Color Palette + Dark/Light + DEV/SDET Mode -->
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+          <!-- 4-Color Palette Selector -->
+          <div class="flex items-center gap-1.5 theme-chip px-2.5 py-1.5 rounded-xl" title="Switch Color Theme">
+            <button onclick="setColorTheme('blue')" id="swatch-blue" aria-label="Cyber Blue Theme" title="Cyber Blue" class="w-4 h-4 rounded-full bg-[#0a84ff] ring-2 ring-offset-1 ring-offset-transparent ring-white scale-110 transition-transform cursor-pointer"></button>
+            <button onclick="setColorTheme('emerald')" id="swatch-emerald" aria-label="Emerald Matrix Theme" title="Emerald Matrix" class="w-4 h-4 rounded-full bg-[#10b981] opacity-75 hover:opacity-100 transition-all cursor-pointer"></button>
+            <button onclick="setColorTheme('violet')" id="swatch-violet" aria-label="Royal Violet Theme" title="Royal Violet" class="w-4 h-4 rounded-full bg-[#8b5cf6] opacity-75 hover:opacity-100 transition-all cursor-pointer"></button>
+            <button onclick="setColorTheme('amber')" id="swatch-amber" aria-label="Sunset Amber Theme" title="Sunset Amber" class="w-4 h-4 rounded-full bg-[#f59e0b] opacity-75 hover:opacity-100 transition-all cursor-pointer"></button>
+          </div>
+
+          <!-- Dark / Light Mode Toggle -->
+          <button id="btn-surface-mode" onclick="toggleSurfaceMode()" aria-label="Toggle Light or Dark Mode" title="Toggle Light / Dark Mode" class="p-2 rounded-xl theme-chip hover:opacity-85 transition-all cursor-pointer">
+            <svg id="icon-sun" class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg id="icon-moon" class="w-4 h-4 text-indigo-500 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+          </button>
+
+          <!-- 3D Mode Switcher (Dev Mode vs SDET Mode) -->
+          <div class="flex items-center gap-1 theme-chip p-1 rounded-xl">
+            <button id="btn-dev-mode" onclick="setSceneMode('dev')" class="px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all accent-pill cursor-pointer">
+              DEV
+            </button>
+            <button id="btn-sdet-mode" onclick="setSceneMode('sdet')" class="px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all opacity-70 hover:opacity-100 cursor-pointer">
+              SDET
+            </button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <main class="max-w-6xl mx-auto w-full px-4 sm:px-8 pt-10 pb-20 space-y-28">
+      
+      <section class="min-h-[75vh] flex flex-col justify-center items-start">
+        <div class="max-w-2xl space-y-6 interactive-el">
+          <!-- Status Pill -->
+          <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full theme-chip text-xs font-mono backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full animate-pulse" style="background-color: var(--accent-secondary)"></span>
+            <span>B.E. CSE '27 • Available for SDET & SWE Roles</span>
+          </div>
+
+          <!-- Name & Title -->
+          <div class="space-y-3">
+            <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.1]">
+              Vaishnavi D
+              <span class="block accent-gradient-text mt-1">
+                Software Engineer & SDET
+              </span>
+            </h1>
+            <p class="text-base sm:text-lg leading-relaxed max-w-xl" style="color: var(--text-muted)">
+              Engineering resilient full-stack systems & AI-driven test automation. Specialized in <span class="font-semibold" style="color: var(--text-main)">Playwright</span>, <span class="font-semibold" style="color: var(--text-main)">Java / Spring Boot</span>, <span class="font-semibold" style="color: var(--text-main)">TypeScript</span>, <span class="font-semibold" style="color: var(--text-main)">REST APIs</span>, and <span class="font-semibold" style="color: var(--text-main)">GenAI Root Cause Analysis</span>.
+            </p>
+          </div>
+
+          <!-- Primary CTA Buttons -->
+          <div class="flex flex-wrap items-center gap-3 pt-2">
+            <a href="#terminal" onclick="triggerAutoTest()" class="px-5 py-3 rounded-xl accent-gradient-bg text-white font-semibold text-sm hover:opacity-95 transition-all accent-glow-shadow flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3l14 9-14 9V3z"/></svg>
+              Run Test Suite
+            </a>
+            <a href="#projects" class="px-5 py-3 rounded-xl glass-card font-medium text-sm transition-all">
+              Explore Projects
+            </a>
+          </div>
+
+          <!-- Social & Direct Contact Links -->
+          <div class="flex flex-wrap items-center gap-4 pt-3 text-sm font-mono" style="color: var(--text-muted)">
+            <a href="https://github.com/vaishnavi-d7" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 hover:opacity-100 opacity-85 transition-opacity">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/></svg>
+              github.com/vaishnavi-d7
+            </a>
+            <span class="opacity-40">|</span>
+            <a href="https://linkedin.com/in/vaishnavi-dhamotharan-407169321" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 hover:opacity-100 opacity-85 transition-opacity">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+              LinkedIn
+            </a>
+            <span class="opacity-40">|</span>
+            <button onclick="copyEmail()" class="flex items-center gap-1.5 hover:opacity-100 opacity-85 transition-opacity cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              <span id="email-label">vaishnavixyz07@gmail.com</span>
+            </button>
+          </div>
+
+          <p class="text-xs font-mono pt-2" style="color: var(--text-subtle)">
+            💡 Tip: Switch color palettes above or drag the background to rotate the 3D cyber-node in real time.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 2: Interactive SDET Live Terminal -->
+      <section id="terminal" class="scroll-mt-24 interactive-el">
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <span class="text-xs font-mono uppercase tracking-widest accent-text">Interactive Quality Console</span>
+            <h2 class="text-2xl sm:text-3xl font-bold mt-1">SDET Live Test Runner</h2>
+          </div>
+          <p class="text-xs font-mono" style="color: var(--text-muted)">Click a command chip below or type directly into the terminal</p>
+        </div>
+
+        <div class="glass-card rounded-2xl overflow-hidden shadow-2xl">
+          <!-- macOS Window Bar -->
+          <div class="px-4 py-3 border-b flex items-center justify-between" style="background: var(--term-bar); border-color: var(--card-border)">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-rose-500/90"></span>
+              <span class="w-3 h-3 rounded-full bg-amber-400/90"></span>
+              <span class="w-3 h-3 rounded-full bg-emerald-500/90"></span>
+              <span class="ml-3 text-xs font-mono" style="color: var(--text-muted)">vaishnavi@sdet-runner: ~/portfolio-suite</span>
+            </div>
+            <span class="text-xs font-mono accent-sec-text hidden sm:inline">Playwright v1.49 • Ready</span>
+          </div>
+
+          <!-- Quick Command Chips -->
+          <div class="px-4 py-2.5 border-b flex flex-wrap items-center gap-2" style="background: var(--chip-bg); border-color: var(--card-border)">
+            <span class="text-xs font-mono mr-1" style="color: var(--text-subtle)">Commands:</span>
+            <button onclick="executeCommand('run-tests')" class="px-2.5 py-1 rounded-lg accent-pill text-xs font-mono hover:opacity-85 transition-opacity cursor-pointer">
+              ▶ run-tests
+            </button>
+            <button onclick="executeCommand('skills')" class="px-2.5 py-1 rounded-lg theme-chip text-xs font-mono hover:opacity-85 transition-opacity cursor-pointer">
+              skills
+            </button>
+            <button onclick="executeCommand('certifications')" class="px-2.5 py-1 rounded-lg theme-chip text-xs font-mono hover:opacity-85 transition-opacity cursor-pointer">
+              certifications
+            </button>
+            <button onclick="executeCommand('about')" class="px-2.5 py-1 rounded-lg theme-chip text-xs font-mono hover:opacity-85 transition-opacity cursor-pointer">
+              about
+            </button>
+            <button onclick="executeCommand('clear')" class="px-2.5 py-1 rounded-lg theme-chip text-xs font-mono opacity-75 hover:opacity-100 transition-opacity cursor-pointer">
+              clear
+            </button>
+          </div>
+
+          <!-- Terminal Output Window -->
+          <div id="terminal-output" class="p-5 font-mono text-xs sm:text-sm space-y-2.5 h-80 overflow-y-auto" style="background: var(--term-bg)">
+            <div style="color: var(--text-muted)">
+              Welcome to <span class="accent-text font-semibold">Vaishnavi D's SDET Verification Console</span>.
+            </div>
+            <div style="color: var(--text-subtle)">
+              Type <span class="accent-sec-text font-semibold">run-tests</span> or click any command chip above to execute automated verification checks.
+            </div>
+          </div>
+
+          <!-- Terminal Input Form -->
+          <form onsubmit="handleTerminalSubmit(event)" class="px-5 py-3 border-t flex items-center gap-2 font-mono text-xs sm:text-sm" style="background: var(--term-bar); border-color: var(--card-border)">
+            <span class="accent-sec-text font-bold">❯</span>
+            <input 
+              id="terminal-input" 
+              type="text" 
+              placeholder="Enter command (e.g., run-tests, skills, certifications, about, clear)..." 
+              autocomplete="off"
+              class="w-full bg-transparent focus:outline-none"
+              style="color: var(--text-main)"
+            />
+          </form>
+        </div>
+      </section>
+
+      <!-- Section 3: Interactive 3D-Styled Project Cards -->
+      <section id="projects" class="scroll-mt-24 interactive-el">
+        <div class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div>
+            <span class="text-xs font-mono uppercase tracking-widest accent-text">Engineering & QA Portfolio</span>
+            <h2 class="text-2xl sm:text-3xl font-bold mt-1">Featured Systems & Automation</h2>
+          </div>
+          <p class="text-xs font-mono" style="color: var(--text-muted)">Click any project card to inspect Architecture & QA Highlights</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="projects-grid">
+          <!-- Cards populated cleanly via JS -->
+        </div>
+      </section>
+
+      <!-- Section 4: Tech Stack & Verified Certifications -->
+      <section id="skills" class="scroll-mt-24 interactive-el space-y-12">
+        <div>
+          <span class="text-xs font-mono uppercase tracking-widest accent-text">Capabilities & Credentials</span>
+          <h2 class="text-2xl sm:text-3xl font-bold mt-1">Tech Stack & Verified Certifications</h2>
+        </div>
+
+        <!-- 3-Column Skills Matrix -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Languages -->
+          <div class="glass-card rounded-2xl p-6 space-y-4">
+            <div class="flex items-center gap-2.5">
+              <div class="p-2 rounded-lg accent-pill">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+              </div>
+              <h3 class="font-semibold">Languages</h3>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">Java (21)</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">TypeScript</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">JavaScript (ES6+)</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">Python</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">SQL</span>
+            </div>
+          </div>
+
+          <!-- QA & Automation -->
+          <div class="glass-card rounded-2xl p-6 space-y-4">
+            <div class="flex items-center gap-2.5">
+              <div class="p-2 rounded-lg accent-pill">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <h3 class="font-semibold">QA & Test Automation</h3>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span class="px-3 py-1.5 rounded-lg accent-pill text-xs font-mono">Playwright</span>
+              <span class="px-3 py-1.5 rounded-lg accent-pill text-xs font-mono">Postman</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">REST API Validation</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">Root Cause Analysis</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">GenAI Test Automation</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">E2E & Regression</span>
+            </div>
+          </div>
+
+          <!-- Frameworks & Databases -->
+          <div class="glass-card rounded-2xl p-6 space-y-4">
+            <div class="flex items-center gap-2.5">
+              <div class="p-2 rounded-lg accent-pill">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+              </div>
+              <h3 class="font-semibold">Frameworks, Cloud & DBs</h3>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">Spring Boot</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">React</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">React Native (Expo)</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">PostgreSQL</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">MySQL</span>
+              <span class="px-3 py-1.5 rounded-lg theme-chip text-xs font-mono">Docker & Git</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Experience & Verified Certifications -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Experience Card -->
+          <div class="glass-card rounded-2xl p-6 space-y-4">
+            <h3 class="text-lg font-semibold flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" style="background-color: var(--accent-primary)"></span>
+              Industry Experience & Education
+            </h3>
+            <div class="space-y-4 border-l-2 pl-4 ml-1" style="border-color: var(--chip-border)">
+              <div>
+                <div class="flex flex-wrap items-center justify-between gap-1">
+                  <h4 class="font-semibold text-sm">Java Application Development Intern</h4>
+                  <span class="text-xs font-mono accent-text">May 2026 – Jul 2026</span>
+                </div>
+                <p class="text-xs mb-1.5" style="color: var(--text-subtle)">E-BOX (Amphisoft)</p>
+                <p class="text-xs leading-relaxed" style="color: var(--text-muted)">
+                  Built backend modules using Java, OOP, JDBC, and MySQL CRUD operations; practiced Spring Boot REST service development and structured debugging.
+                </p>
+              </div>
+              <div>
+                <div class="flex flex-wrap items-center justify-between gap-1">
+                  <h4 class="font-semibold text-sm">B.E. in Computer Science and Engineering</h4>
+                  <span class="text-xs font-mono accent-sec-text">Expected 2027</span>
+                </div>
+                <p class="text-xs" style="color: var(--text-muted)">RP Sarathy Institute of Technology, Salem • CGPA: 7.71/10</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Certifications Grid -->
+          <div class="glass-card rounded-2xl p-6 space-y-4">
+            <h3 class="text-lg font-semibold flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full" style="background-color: var(--accent-secondary)"></span>
+              Verified Certifications
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="p-3.5 rounded-xl theme-chip space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-mono accent-text">POSTMAN ACADEMY</span>
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 rounded accent-pill">VERIFIED</span>
+                </div>
+                <h4 class="text-xs font-semibold">API Testing Path (v12)</h4>
+                <p class="text-[11px] font-mono" style="color: var(--text-subtle)">ID: z8bkfmgdst5a</p>
+              </div>
+
+              <div class="p-3.5 rounded-xl theme-chip space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-mono accent-sec-text">POSTMAN ACADEMY</span>
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 rounded accent-pill">BADGE</span>
+                </div>
+                <h4 class="text-xs font-semibold">API Beginner Path</h4>
+                <p class="text-[11px] font-mono" style="color: var(--text-subtle)">Issued Nov 2026</p>
+              </div>
+
+              <div class="p-3.5 rounded-xl theme-chip space-y-1">
+                <span class="text-[11px] font-mono accent-text">CISCO NETACAD</span>
+                <h4 class="text-xs font-semibold">Python Essentials 1</h4>
+                <p class="text-[11px] font-mono" style="color: var(--text-subtle)">Scripting & Automation</p>
+              </div>
+
+              <div class="p-3.5 rounded-xl theme-chip space-y-1">
+                <span class="text-[11px] font-mono accent-sec-text">IBM SKILLSBUILD</span>
+                <h4 class="text-xs font-semibold">AI Fundamentals</h4>
+                <p class="text-[11px] font-mono" style="color: var(--text-subtle)">GenAI & ML Workflows</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer id="contact" class="border-t py-8 px-4 sm:px-8 interactive-el" style="background: var(--card-bg); border-color: var(--card-border)">
+      <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono" style="color: var(--text-muted)">
+        <div>
+          <span class="font-semibold" style="color: var(--text-main)">Vaishnavi D</span> • Salem, Tamil Nadu, India
+        </div>
+        <div class="flex items-center gap-5">
+          <a href="https://github.com/vaishnavi-d7" target="_blank" rel="noopener noreferrer" class="hover:opacity-100 opacity-80 transition-opacity">GitHub</a>
+          <a href="https://linkedin.com/in/vaishnavi-dhamotharan-407169321" target="_blank" rel="noopener noreferrer" class="hover:opacity-100 opacity-80 transition-opacity">LinkedIn</a>
+          <button onclick="copyEmail()" class="hover:opacity-100 opacity-80 transition-opacity cursor-pointer">Copy Email</button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Project Architecture & QA Highlights Modal -->
+  <div id="project-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div class="glass-card max-w-2xl w-full rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 relative">
+      <button onclick="closeProjectModal()" class="absolute top-5 right-5 w-8 h-8 rounded-lg theme-chip flex items-center justify-center transition-colors cursor-pointer">
+        ✕
+      </button>
+
+      <div class="space-y-2 pr-8">
+        <span id="modal-category" class="text-xs font-mono uppercase tracking-wider accent-text"></span>
+        <h3 id="modal-title" class="text-2xl font-bold"></h3>
+        <div id="modal-tags" class="flex flex-wrap gap-1.5 pt-1"></div>
+      </div>
+
+      <div class="space-y-4 text-sm">
+        <div class="p-4 rounded-xl theme-chip space-y-1.5">
+          <h4 class="text-xs font-mono uppercase tracking-wider" style="color: var(--text-subtle)">System Architecture & Engineering</h4>
+          <p id="modal-arch" class="leading-relaxed" style="color: var(--text-muted)"></p>
+        </div>
+
+        <div class="p-4 rounded-xl accent-pill space-y-2">
+          <h4 class="text-xs font-mono uppercase tracking-wider flex items-center gap-1.5">
+            <span>✔</span> SDET & Quality Engineering Highlights
+          </h4>
+          <ul id="modal-qa-list" class="space-y-1.5 text-xs sm:text-sm list-disc list-inside" style="color: var(--text-main)"></ul>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t" style="border-color: var(--card-border)">
+        <a id="modal-github" href="https://github.com/vaishnavi-d7" target="_blank" rel="noopener noreferrer" class="px-4 py-2 rounded-xl theme-chip text-xs font-mono flex items-center gap-2 hover:opacity-85 transition-opacity">
+          View Repository on GitHub ↗
+        </a>
+        <button onclick="closeProjectModal()" class="px-4 py-2 rounded-xl accent-pill text-xs font-mono hover:opacity-85 transition-opacity cursor-pointer">
+          Close Inspector
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl accent-gradient-bg text-white font-mono text-xs font-semibold shadow-xl translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    Copied email to clipboard!
+  </div>
+
+  <script>
+    // ==========================================
+    // 0. MULTI-COLOR PALETTE & SURFACE THEME ENGINE
+    // ==========================================
+    const colorPalettes = {
+      blue: {
+        name: 'Cyber Blue',
+        primary: '#0a84ff',
+        secondary: '#30d158',
+        glow: 'rgba(10, 132, 255, 0.25)',
+        hexPrimary: 0x0a84ff,
+        hexSecondary: 0x30d158,
+        hexEmissive: 0x0066cc
+      },
+      emerald: {
+        name: 'Emerald Matrix',
+        primary: '#10b981',
+        secondary: '#34d399',
+        glow: 'rgba(16, 185, 129, 0.25)',
+        hexPrimary: 0x10b981,
+        hexSecondary: 0x34d399,
+        hexEmissive: 0x059669
+      },
+      violet: {
+        name: 'Royal Violet',
+        primary: '#8b5cf6',
+        secondary: '#ec4899',
+        glow: 'rgba(139, 92, 246, 0.25)',
+        hexPrimary: 0x8b5cf6,
+        hexSecondary: 0xec4899,
+        hexEmissive: 0x6d28d9
+      },
+      amber: {
+        name: 'Sunset Amber',
+        primary: '#f59e0b',
+        secondary: '#f97316',
+        glow: 'rgba(245, 158, 11, 0.25)',
+        hexPrimary: 0xf59e0b,
+        hexSecondary: 0xf97316,
+        hexEmissive: 0xd97706
+      }
+    };
+
+    let activeColorKey = localStorage.getItem('vd-color-theme') || 'blue';
+    let isLightMode = localStorage.getItem('vd-surface-mode') === 'light';
+
+    function applyColorPalette(key) {
+      if (!colorPalettes[key]) key = 'blue';
+      activeColorKey = key;
+      localStorage.setItem('vd-color-theme', key);
+      const pal = colorPalettes[key];
+
+      const root = document.documentElement;
+      root.style.setProperty('--accent-primary', pal.primary);
+      root.style.setProperty('--accent-secondary', pal.secondary);
+      root.style.setProperty('--accent-glow', pal.glow);
+
+      // Update active swatch ring
+      Object.keys(colorPalettes).forEach(k => {
+        const el = document.getElementById(`swatch-${k}`);
+        if (!el) return;
+        if (k === key) {
+          el.classList.add('ring-2', 'scale-110', 'opacity-100');
+          el.classList.remove('opacity-75');
+          el.style.ringColor = isLightMode ? '#1d1d1f' : '#ffffff';
+        } else {
+          el.classList.remove('ring-2', 'scale-110', 'opacity-100');
+          el.classList.add('opacity-75');
+        }
+      });
+
+      update3DThemeMaterials();
+    }
+
+    function applySurfaceMode(light) {
+      isLightMode = light;
+      localStorage.setItem('vd-surface-mode', light ? 'light' : 'dark');
+      const htmlEl = document.documentElement;
+      const iconSun = document.getElementById('icon-sun');
+      const iconMoon = document.getElementById('icon-moon');
+
+      if (light) {
+        htmlEl.classList.remove('dark');
+        htmlEl.classList.add('light');
+        if (iconSun) iconSun.classList.add('hidden');
+        if (iconMoon) iconMoon.classList.remove('hidden');
+      } else {
+        htmlEl.classList.remove('light');
+        htmlEl.classList.add('dark');
+        if (iconSun) iconSun.classList.remove('hidden');
+        if (iconMoon) iconMoon.classList.add('hidden');
+      }
+
+      update3DThemeMaterials();
+    }
+
+    function setColorTheme(key) {
+      applyColorPalette(key);
+    }
+
+    function toggleSurfaceMode() {
+      applySurfaceMode(!isLightMode);
+    }
+
+    // ==========================================
+    // 1. PROJECT DATA (Single Source of Truth)
+    // ==========================================
+    const projectsData = [
+      {
+        id: 'rootcause-qa',
+        title: 'RootCause-QA',
+        subtitle: 'Autonomous QA & Root Cause Analysis Agent',
+        category: 'AI-Assisted Test Automation',
+        tags: ['Playwright', 'TypeScript', 'Claude API', 'Git'],
+        summary: 'Autonomous Playwright agent that navigates web workflows, detects runtime errors & UI regressions, and correlates stack traces with Git commit history.',
+        architecture: 'Built an automated browser orchestration layer in TypeScript using Playwright to traverse critical user flows, capture console/network telemetry, and pipe failure stack traces into Claude API alongside recent Git diffs.',
+        qaHighlights: [
+          'Automatically flags uncaught JavaScript exceptions, broken user paths, and visual/DOM regressions.',
+          'Correlates execution logs with Git commit history to pinpoint exact breaking changes.',
+          'Generates structured root-cause triage summaries to accelerate developer debugging.'
+        ],
+        github: 'https://github.com/vaishnavi-d7'
+      },
+      {
+        id: 'stockwatch',
+        title: 'StockWatch',
+        subtitle: 'Mobile Inventory Management App',
+        category: 'Enterprise Supply Chain & Mobile',
+        tags: ['React Native (Expo)', 'TypeScript', 'Spring Boot', 'PostgreSQL', 'Docker'],
+        summary: 'Cross-platform mobile inventory tracker monitoring real-time stock movements, low-stock operational triggers, and Spring Boot REST persistence.',
+        architecture: 'Engineered a React Native (Expo) mobile client communicating with a containerized Spring Boot backend and PostgreSQL database for real-time SKU tracking and threshold alerts.',
+        qaHighlights: [
+          'Validated Spring Boot REST APIs against edge-case payloads (negative stock quantities, concurrent updates, invalid SKU formats).',
+          'Enforced strict schema constraints and deterministic HTTP error responses across mobile-to-DB workflows.',
+          'Containerized PostgreSQL environments with Docker for reproducible integration testing.'
+        ],
+        github: 'https://github.com/vaishnavi-d7'
+      },
+      {
+        id: 'saferoute',
+        title: 'SafeRoute',
+        subtitle: 'Risk-Aware Navigation Platform',
+        category: 'Full-Stack Spatial & API Engineering',
+        tags: ['Java 21', 'Spring Boot', 'React', 'TypeScript', 'MySQL', 'Google Maps API'],
+        summary: 'Full-stack route-planning system evaluating alternative paths with real-time safety scoring, incident reporting, and live GPS route-deviation detection.',
+        architecture: 'Developed a Java 21 Spring Boot REST backend paired with a responsive React/TypeScript frontend and Google Maps API integration, backed by relational MySQL persistence and role-based administration.',
+        qaHighlights: [
+          'Tested REST endpoints and MySQL persistence across boundary conditions including malformed GPS coordinates and off-route deviations.',
+          'Verified role-based access control (RBAC) permissions for administrative incident moderation.',
+          'Performed cross-browser exploratory and state-sync testing on real-time map overlays.'
+        ],
+        github: 'https://github.com/vaishnavi-d7'
+      },
+      {
+        id: 'smartflow',
+        title: 'SmartFlow',
+        subtitle: 'IoT & AI Urban Flood Early-Warning System',
+        category: 'High-Concurrency Telemetry & GenAI',
+        tags: ['Python', 'REST APIs', 'GenAI', 'IoT Telemetry'],
+        summary: 'Real-time urban flood and road-hazard early-warning pipeline ingesting IoT sensor streams and classifying risk levels via AI models.',
+        architecture: 'Designed an asynchronous telemetry ingestion pipeline processing multi-sensor water-level and hazard feeds to trigger real-time community alerts.',
+        qaHighlights: [
+          'Validated end-to-end data integrity from raw sensor JSON payloads to alert dispatch triggers.',
+          'Stress-tested classification logic with synthetic edge-case datasets (noisy, dropped, and out-of-range sensor readings) to minimize false positives.'
+        ],
+        github: 'https://github.com/vaishnavi-d7'
+      }
+    ];
+
+    // Render Project Cards
+    const projectsGrid = document.getElementById('projects-grid');
+    projectsData.forEach((proj) => {
+      const card = document.createElement('div');
+      card.className = 'glass-card rounded-2xl p-6 flex flex-col justify-between cursor-pointer group';
+      card.onclick = () => openProjectModal(proj.id);
+      card.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono uppercase tracking-wider accent-text">${proj.category}</span>
+            <span class="text-xs font-mono accent-text opacity-75 group-hover:opacity-100 transition-opacity">Inspect ↗</span>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold group-hover:opacity-90 transition-opacity">${proj.title}</h3>
+            <p class="text-xs font-mono mt-0.5" style="color: var(--text-subtle)">${proj.subtitle}</p>
+          </div>
+          <p class="text-sm leading-relaxed pt-1" style="color: var(--text-muted)">${proj.summary}</p>
+        </div>
+        <div class="flex flex-wrap gap-1.5 pt-5 mt-4 border-t" style="border-color: var(--card-border)">
+          ${proj.tags.map(t => `<span class="px-2.5 py-1 rounded-md theme-chip text-[11px] font-mono">${t}</span>`).join('')}
+        </div>
+      `;
+      projectsGrid.appendChild(card);
+    });
+
+    // Modal Controls
+    function openProjectModal(id) {
+      const proj = projectsData.find(p => p.id === id);
+      if (!proj) return;
+      document.getElementById('modal-category').textContent = proj.category;
+      document.getElementById('modal-title').textContent = `${proj.title} — ${proj.subtitle}`;
+      document.getElementById('modal-tags').innerHTML = proj.tags.map(t =>
+        `<span class="px-2.5 py-1 rounded-md accent-pill text-xs font-mono">${t}</span>`
+      ).join('');
+      document.getElementById('modal-arch').textContent = proj.architecture;
+      document.getElementById('modal-qa-list').innerHTML = proj.qaHighlights.map(item =>
+        `<li>${item}</li>`
+      ).join('');
+      document.getElementById('modal-github').href = proj.github;
+
+      const modal = document.getElementById('project-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeProjectModal() {
+      const modal = document.getElementById('project-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    document.getElementById('project-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'project-modal') closeProjectModal();
+    });
+
+    // ==========================================
+    // 2. INTERACTIVE SDET TERMINAL LOGIC
+    // ==========================================
+    const terminalOutput = document.getElementById('terminal-output');
+    const terminalInput = document.getElementById('terminal-input');
+    let isTestRunning = false;
+
+    function appendLine(html, delay = 0) {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          const div = document.createElement('div');
+          div.innerHTML = html;
+          terminalOutput.appendChild(div);
+          terminalOutput.scrollTop = terminalOutput.scrollHeight;
+          resolve();
+        }, delay);
+      });
+    }
+
+    async function executeCommand(rawCmd) {
+      const cmd = rawCmd.trim().toLowerCase();
+      if (!cmd) return;
+
+      await appendLine(`<div class="pt-1" style="color: var(--text-main)"><span class="accent-sec-text font-bold">❯</span> ${cmd}</div>`);
+
+      if (cmd === 'clear') {
+        terminalOutput.innerHTML = '';
+        return;
+      }
+
+      if (cmd === 'run-tests') {
+        if (isTestRunning) return;
+        isTestRunning = true;
+        setSceneMode('sdet');
+
+        await appendLine(`<div class="accent-text">Running 5 Playwright & Spring Boot verification specs using 4 workers...</div>`, 150);
+
+        const tests = [
+          { name: 'ui/rootcause-qa.spec.ts › Autonomous DOM & JS regression scanner', time: '142ms' },
+          { name: 'api/stockwatch-inventory.spec.ts › POST /api/stock edge-case validation', time: '89ms' },
+          { name: 'api/saferoute-routing.spec.ts › MySQL spatial & RBAC integrity check', time: '114ms' },
+          { name: 'genai/rca-correlator.spec.ts › Stack trace to Git diff root-cause mapping', time: '205ms' },
+          { name: 'credentials/postman-v12.spec.ts › Verified API Testing Path (z8bkfmgdst5a)', time: '34ms' }
+        ];
+
+        for (const t of tests) {
+          await appendLine(
+            `<div class="flex items-center justify-between gap-2" style="color: var(--text-main)">
+              <span><span class="px-1.5 py-0.5 rounded accent-pill font-bold text-xs mr-2">[PASS]</span>${t.name}</span>
+              <span class="text-xs shrink-0" style="color: var(--text-subtle)">${t.time}</span>
+            </div>`,
+            320
+          );
+        }
+
+        await appendLine(
+          `<div class="mt-2 p-2.5 rounded-lg accent-pill font-semibold">
+            ✔ 5 passed (584ms) • 0 flaky • Quality Gate: APPROVED
+          </div>`,
+          250
+        );
+        isTestRunning = false;
+        return;
+      }
+
+      if (cmd === 'skills') {
+        await appendLine(`
+          <div class="space-y-1 pl-2 border-l-2" style="border-color: var(--accent-primary); color: var(--text-muted)">
+            <div><span class="accent-text font-semibold">Languages:</span> Java 21, TypeScript, JavaScript, Python, SQL</div>
+            <div><span class="accent-sec-text font-semibold">QA & Automation:</span> Playwright, Postman, REST APIs, Root Cause Analysis, GenAI Testing</div>
+            <div><span class="accent-text font-semibold">Frameworks & DBs:</span> Spring Boot, React, React Native (Expo), PostgreSQL, MySQL, Docker</div>
+          </div>
+        `);
+        return;
+      }
+
+      if (cmd === 'certifications') {
+        await appendLine(`
+          <div class="space-y-1 pl-2 border-l-2" style="border-color: var(--accent-secondary); color: var(--text-muted)">
+            <div>• <span class="font-semibold" style="color: var(--text-main)">API Testing Path (v12)</span> — Postman Academy (ID: z8bkfmgdst5a)</div>
+            <div>• <span class="font-semibold" style="color: var(--text-main)">API Beginner Path Badge</span> — Postman Academy</div>
+            <div>• <span class="font-semibold" style="color: var(--text-main)">Python Essentials 1</span> — Cisco Networking Academy</div>
+            <div>• <span class="font-semibold" style="color: var(--text-main)">Artificial Intelligence Fundamentals</span> — IBM SkillsBuild</div>
+          </div>
+        `);
+        return;
+      }
+
+      if (cmd === 'about') {
+        await appendLine(`
+          <div class="pl-2 border-l-2" style="border-color: var(--text-subtle); color: var(--text-muted)">
+            Vaishnavi D — Final-year B.E. CSE student (2027) at RP Sarathy Institute of Technology, Salem. Focused on building reliable Java/Spring Boot backends, full-stack apps, and Playwright + GenAI test automation.
+          </div>
+        `);
+        return;
+      }
+
+      await appendLine(`<div class="text-rose-500">Command not found: "${cmd}". Try: run-tests, skills, certifications, about, clear</div>`);
+    }
+
+    function handleTerminalSubmit(e) {
+      e.preventDefault();
+      const val = terminalInput.value;
+      terminalInput.value = '';
+      executeCommand(val);
+    }
+
+    function triggerAutoTest() {
+      setTimeout(() => executeCommand('run-tests'), 350);
+    }
+
+    // Clipboard Copy Helper (iFrame-safe)
+    function copyEmail() {
+      const email = 'vaishnavixyz07@gmail.com';
+      const tempInput = document.createElement('input');
+      tempInput.value = email;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+
+      const toast = document.getElementById('toast');
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2400);
+    }
+
+    // ==========================================
+    // 3. THREE.JS 3D INTERACTIVE CYBER-NODE SCENE
+    // ==========================================
+    let scene, camera, renderer;
+    let coreGroup, innerCore, wireShell, ring1, ring2, nodesGroup, gridHelper;
+    let primaryLight, secondaryLight;
+    let targetRotX = 0.2, targetRotY = 0.4;
+    let mouseX = 0, mouseY = 0;
+    let isDragging = false, prevMouseX = 0, prevMouseY = 0;
+    let currentMode = 'dev';
+
+    function update3DThemeMaterials() {
+      if (!scene) return;
+      const pal = colorPalettes[activeColorKey] || colorPalettes.blue;
+      const useSecondaryAsCore = currentMode === 'sdet';
+
+      const mainHex = useSecondaryAsCore ? pal.hexSecondary : pal.hexPrimary;
+      const altHex = useSecondaryAsCore ? pal.hexPrimary : pal.hexSecondary;
+
+      scene.fog.color.setHex(isLightMode ? 0xf5f5f7 : 0x09090b);
+
+      if (primaryLight) primaryLight.color.setHex(pal.hexPrimary);
+      if (secondaryLight) secondaryLight.color.setHex(pal.hexSecondary);
+
+      if (innerCore) {
+        innerCore.material.color.setHex(mainHex);
+        innerCore.material.emissive.setHex(useSecondaryAsCore ? pal.hexSecondary : pal.hexEmissive);
+      }
+      if (wireShell) {
+        wireShell.material.color.setHex(mainHex);
+        wireShell.material.opacity = isLightMode ? 0.35 : 0.28;
+      }
+      if (ring1) ring1.material.color.setHex(pal.hexPrimary);
+      if (ring2) ring2.material.color.setHex(pal.hexSecondary);
+
+      if (nodesGroup) {
+        nodesGroup.children.forEach((node, idx) => {
+          const hex = idx % 2 === 0 ? pal.hexPrimary : pal.hexSecondary;
+          node.material.color.setHex(hex);
+          node.material.emissive.setHex(hex);
+        });
+      }
+
+      if (gridHelper) {
+        scene.remove(gridHelper);
+        gridHelper = new THREE.GridHelper(
+          40,
+          40,
+          pal.hexPrimary,
+          isLightMode ? 0xd4d4d8 : 0x18181b
+        );
+        gridHelper.position.y = -3.2;
+        gridHelper.material.transparent = true;
+        gridHelper.material.opacity = isLightMode ? 0.45 : 0.35;
+        scene.add(gridHelper);
+      }
+    }
+
+    function init3DScene() {
+      const canvas = document.getElementById('bg-canvas');
+      const pal = colorPalettes[activeColorKey] || colorPalettes.blue;
+
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(isLightMode ? 0xf5f5f7 : 0x09090b, 0.045);
+
+      camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 0.6, 8.5);
+
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // Lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+      scene.add(ambientLight);
+
+      primaryLight = new THREE.PointLight(pal.hexPrimary, 2.5, 25);
+      primaryLight.position.set(4, 4, 4);
+      scene.add(primaryLight);
+
+      secondaryLight = new THREE.PointLight(pal.hexSecondary, 2.0, 25);
+      secondaryLight.position.set(-4, -3, 3);
+      scene.add(secondaryLight);
+
+      // Subtle Cyber Grid Floor
+      gridHelper = new THREE.GridHelper(40, 40, pal.hexPrimary, isLightMode ? 0xd4d4d8 : 0x18181b);
+      gridHelper.position.y = -3.2;
+      gridHelper.material.transparent = true;
+      gridHelper.material.opacity = isLightMode ? 0.45 : 0.35;
+      scene.add(gridHelper);
+
+      // Central Floating Developer / SDET Cyber-Node
+      coreGroup = new THREE.Group();
+      coreGroup.position.x = window.innerWidth > 768 ? 2.2 : 0;
+      coreGroup.position.y = 0.2;
+      scene.add(coreGroup);
+
+      // Inner Glowing Icosahedron Core
+      const coreGeo = new THREE.IcosahedronGeometry(1.15, 1);
+      const coreMat = new THREE.MeshStandardMaterial({
+        color: pal.hexPrimary,
+        emissive: pal.hexEmissive,
+        emissiveIntensity: 0.65,
+        roughness: 0.2,
+        metalness: 0.8,
+        flatShading: true
+      });
+      innerCore = new THREE.Mesh(coreGeo, coreMat);
+      coreGroup.add(innerCore);
+
+      // Outer Wireframe Geodesic Cage
+      const wireGeo = new THREE.IcosahedronGeometry(1.65, 1);
+      const wireMat = new THREE.MeshBasicMaterial({
+        color: pal.hexPrimary,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.28
+      });
+      wireShell = new THREE.Mesh(wireGeo, wireMat);
+      coreGroup.add(wireShell);
+
+      // Orbiting Data Rings
+      const ringGeo1 = new THREE.TorusGeometry(2.35, 0.02, 16, 100);
+      const ringMat1 = new THREE.MeshBasicMaterial({ color: pal.hexPrimary, transparent: true, opacity: 0.55 });
+      ring1 = new THREE.Mesh(ringGeo1, ringMat1);
+      ring1.rotation.x = Math.PI / 2.4;
+      coreGroup.add(ring1);
+
+      const ringGeo2 = new THREE.TorusGeometry(2.85, 0.015, 16, 100);
+      const ringMat2 = new THREE.MeshBasicMaterial({ color: pal.hexSecondary, transparent: true, opacity: 0.45 });
+      ring2 = new THREE.Mesh(ringGeo2, ringMat2);
+      ring2.rotation.x = -Math.PI / 3;
+      ring2.rotation.y = Math.PI / 5;
+      coreGroup.add(ring2);
+
+      // Orbiting Test / Microservice Nodes
+      nodesGroup = new THREE.Group();
+      coreGroup.add(nodesGroup);
+
+      const nodeGeo = new THREE.OctahedronGeometry(0.16, 0);
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const radius = i % 2 === 0 ? 2.35 : 2.85;
+        const hex = i % 2 === 0 ? pal.hexPrimary : pal.hexSecondary;
+        const nodeMat = new THREE.MeshStandardMaterial({
+          color: hex,
+          emissive: hex,
+          emissiveIntensity: 0.8
+        });
+        const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
+        nodeMesh.position.set(
+          Math.cos(angle) * radius,
+          Math.sin(angle * 2) * 0.7,
+          Math.sin(angle) * radius
+        );
+        nodesGroup.add(nodeMesh);
+      }
+
+      // Event Listeners for Mouse Parallax & Drag Rotation
+      window.addEventListener('resize', onWindowResize);
+      canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        prevMouseX = e.clientX;
+        prevMouseY = e.clientY;
+      });
+      window.addEventListener('mouseup', () => { isDragging = false; });
+      window.addEventListener('mousemove', (e) => {
+        mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+        mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        if (isDragging) {
+          const deltaX = e.clientX - prevMouseX;
+          const deltaY = e.clientY - prevMouseY;
+          targetRotY += deltaX * 0.008;
+          targetRotX += deltaY * 0.008;
+          prevMouseX = e.clientX;
+          prevMouseY = e.clientY;
+        }
+      });
+
+      // Touch support for mobile drag
+      canvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          isDragging = true;
+          prevMouseX = e.touches[0].clientX;
+          prevMouseY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+      window.addEventListener('touchend', () => { isDragging = false; });
+      window.addEventListener('touchmove', (e) => {
+        if (isDragging && e.touches.length === 1) {
+          const deltaX = e.touches[0].clientX - prevMouseX;
+          const deltaY = e.touches[0].clientY - prevMouseY;
+          targetRotY += deltaX * 0.008;
+          targetRotX += deltaY * 0.008;
+          prevMouseX = e.touches[0].clientX;
+          prevMouseY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+    }
+
+    function setSceneMode(mode) {
+      currentMode = mode;
+      const btnDev = document.getElementById('btn-dev-mode');
+      const btnSdet = document.getElementById('btn-sdet-mode');
+
+      if (mode === 'sdet') {
+        btnSdet.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all accent-pill cursor-pointer';
+        btnDev.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all opacity-70 hover:opacity-100 cursor-pointer';
+      } else {
+        btnDev.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all accent-pill cursor-pointer';
+        btnSdet.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all opacity-70 hover:opacity-100 cursor-pointer';
+      }
+      update3DThemeMaterials();
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      if (coreGroup) {
+        coreGroup.position.x = window.innerWidth > 768 ? 2.2 : 0;
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const speedMult = currentMode === 'sdet' ? 1.8 : 1.0;
+
+      if (!isDragging) {
+        targetRotY += 0.003 * speedMult;
+      }
+
+      coreGroup.rotation.y += (targetRotY - coreGroup.rotation.y) * 0.06;
+      coreGroup.rotation.x += (targetRotX - coreGroup.rotation.x) * 0.06;
+
+      innerCore.rotation.y -= 0.005 * speedMult;
+      wireShell.rotation.x += 0.004 * speedMult;
+      ring1.rotation.z += 0.006 * speedMult;
+      ring2.rotation.z -= 0.005 * speedMult;
+      nodesGroup.rotation.y += 0.008 * speedMult;
+
+      // Subtle mouse parallax on camera
+      camera.position.x += (mouseX * 0.6 - camera.position.x) * 0.04;
+      camera.position.y += (0.6 + mouseY * 0.4 - camera.position.y) * 0.04;
+      camera.lookAt(0, 0, 0);
+
+      renderer.render(scene, camera);
+    }
+
+    window.onload = function () {
+      applySurfaceMode(isLightMode);
+      applyColorPalette(activeColorKey);
+      init3DScene();
+      animate();
+    };
+  </script>
+</body>
+</html>
